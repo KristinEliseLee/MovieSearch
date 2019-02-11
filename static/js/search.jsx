@@ -22,8 +22,7 @@ function DisplayResults(props) {
   for (let item of resultsToShow) {
     allResults.push(
       <tr key={i}>
-        <td><a href={`/patterns/${item[0]}`}>{item[1]} </a></td>
-        <td><a href={`/patterns/${item[0]}`}><img src={item[2]} className='thumbnail' /></a></td>
+        <td><a href={`/Movie/${item.id}`}>{item.title}({item.release_date})</a></td>
       </tr>
     );
     i += 1;
@@ -44,9 +43,10 @@ function DisplayPages(props) {
     allPages.push(<div key='prev' className='pages col-1' onClick={
       ()=>props.onClick(props.page - 1)}> {'<<prev'} </div>
     );
-  } else {
-    allPages.push(<div key='prev' className='col-1 currentPage'> {'<<prev'} </div>);
-  }
+  } 
+  // else {
+  //   allPages.push(<div key='prev' className='col-1 currentPage'> {'<<prev'} </div>);
+  // }
   const numPages = [];
   for (let i = 1; i <= props.numPages; i += 1) {
     if (i !== props.page) {
@@ -63,9 +63,10 @@ function DisplayPages(props) {
     allPages.push(<div key='next' className='col-1 pages' onClick={
       ()=>props.onClick(props.page + 1)}> {'next>>'} </div>
     );
-  } else {
-    allPages.push(<div key='next' className='col-1 currentPage'>{'next>>'}</div>);
-  }
+  } 
+  // else {
+  //   allPages.push(<div key='next' className='col-1 currentPage'>{'next>>'}</div>);
+  // }
   if (props.numPages > 1) {
     return (
       <div key='allPages' className='row justify-content-center'>{allPages}
@@ -106,11 +107,12 @@ class App extends React.Component {
     // fetch(url)
     // .then(response => response.json())
     // .then(data => this.setSearchResults(data))
-    $.get('/patterns/search/results.json', { searchVal: newState.searchVal, page: page },
+    $.get('/search/results.json', { searchVal: this.state.searchVal
+    },
       (response) => {
-        let data = JSON.parse(response);
-        this.setState({ searchResults: data, page: 1, 
-          numPages:Math.ceil(data.length/this.state.resultsPerPage)
+        // let data = JSON.parse(response);
+        this.setState({ searchResults: response.results, page: 1, 
+          numPages:Math.ceil(response.results.length/this.state.resultsPerPage)
         });
       });
   }
@@ -124,7 +126,8 @@ class App extends React.Component {
         value={this.state.searchVal} />
       <DisplayPages numPages={this.state.numPages}
         page={this.state.page} onClick={this.changePage}/>
-      <DisplayResults results={this.state.searchResults} />
+      <DisplayResults results={this.state.searchResults} page={this.state.page}
+      perPage={this.state.resultsPerPage} />
     </div>
     );
   }
