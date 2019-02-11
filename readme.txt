@@ -1,8 +1,11 @@
-
 1 - get an API key from The Movie Database (TMDB)
+
+In cloned folder:
+
+
 2 - set up python virtual environment and activate it
 3 - pip install -r requirements.txt
-4 - export the API key as an OS variable named API_KEY (I use a secrets.sh file, example below)
+4 - export the API key as an OS environment variable named API_KEY (I use a secrets.sh file, example below)
     secrets.sh
     export API_KEY=<<api key here>>
 
