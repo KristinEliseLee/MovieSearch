@@ -1,20 +1,24 @@
 /* global $ React :true*/
 
 function SearchBar(props) {
+  // Creates the search bar at the top of the page
+  // props are value, onSubmit, onChange
   return (
     <form action='/search/results.json' id='searchbar' onSubmit={(evt) => {
       evt.preventDefault(); props.onSubmit(1);
-    }}><div>
-        <div>
-          <input type='text' className="searchBar text-input form-control" value={props.value} name='searchVal' onChange={props.onChange}/>
-          <input type='submit' name='Search' className='btn btn-outline-secondary'/>
-        </div>
-      </div>
+    }}>
+        <input type='text' id='searchTexBar' value={props.value} name='searchVal' onChange={props.onChange}/>
+        <input type='submit' name='Search' id='searchButton'/>
     </form>
   );
 }
 
 function DisplayResults(props) {
+  // Shows single page of results
+  // props are results, page, perPage, isPopular
+  if (props.results.length === 0){
+    return null
+  }
   let allResults = [];
   let i = 0;
   let index = props.page-1
@@ -22,13 +26,25 @@ function DisplayResults(props) {
   for (let item of resultsToShow) {
     allResults.push(
       <tr key={i}>
-        <td><a href={`/Movie/${item.id}`}>{item.title}({item.release_date})</a></td>
+        <td><a href={`/movie/${item.id}`}>{item.title}({item.release_date})</a></td>
       </tr>
     );
     i += 1;
   }
+  if (props.isPopular === true){
+      return (
+        <div>
+          <h3> Currently Popular</h3>
+          <table id='results'>
+            <tbody>
+              {allResults}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
   return (
-    <table className='table col-8 offset-2'>
+    <table id='results'>
       <tbody>
         {allResults}
       </tbody>
@@ -37,39 +53,33 @@ function DisplayResults(props) {
 }
 
 function DisplayPages(props) {
-  // props - numPages, page
+  // Handles pagination of results
+  // props are page, numPages, onClick
   const allPages = [];
   if (props.page > 1) {
-    allPages.push(<div key='prev' className='pages col-1' onClick={
-      ()=>props.onClick(props.page - 1)}> {'<<prev'} </div>
+    allPages.push(<span key='prev' className='pages' onClick={
+      ()=>props.onClick(props.page - 1)}> {'<<prev'} </span>
     );
   } 
-  // else {
-  //   allPages.push(<div key='prev' className='col-1 currentPage'> {'<<prev'} </div>);
-  // }
-  const numPages = [];
+  // const numPages = [];
   for (let i = 1; i <= props.numPages; i += 1) {
     if (i !== props.page) {
-      numPages.push(
+      allPages.push(
         <span key={i} className='pages' onClick={()=>props.onClick(i)}>{i}
         </span>
       );
     } else {
-      numPages.push(<span key={i} className='currentPage'>{i}</span>);
+      allPages.push(<span key={i} id='currentPage'>{i}</span>);
     }
   }
-  allPages.push(<div key='numPages' className='numpages col-6'>{numPages}</div>);
   if (props.page < props.numPages) {
-    allPages.push(<div key='next' className='col-1 pages' onClick={
-      ()=>props.onClick(props.page + 1)}> {'next>>'} </div>
+    allPages.push(<span key='next' className='pages' onClick={
+      ()=>props.onClick(props.page + 1)}> {'next>>'} </span>
     );
   } 
-  // else {
-  //   allPages.push(<div key='next' className='col-1 currentPage'>{'next>>'}</div>);
-  // }
   if (props.numPages > 1) {
     return (
-      <div key='allPages' className='row justify-content-center'>{allPages}
+      <div key='allPages'>{allPages}
       </div>
     );
   }
@@ -84,34 +94,41 @@ class App extends React.Component {
       searchVal: '',
       numpages:0,
       page:1,
-      searchResults: []
+      searchResults: [],
+      popular: [],
+      showPopular:true
     };
     this.handleSearch = this.handleSearch.bind(this);
     this.handleSearchChange = this.handleSearchChange.bind(this);
     this.changePage = this.changePage.bind(this)
+    // this.getPopular = this.getPopular.bind(this)
+  }
+
+  componentDidMount(){
+    $.get('/popular.json',
+      (response) => {
+          this.setState({ popular: response.results, showPopular:true});
+      }
+    );  
   }
 
   handleSearchChange(evt) {
+    // Keeps the SearchVal up to date with entered info
     this.setState({ searchVal: evt.target.value });
   }
 
   changePage(num) {
+    // Used when changing page number
     this.setState({page:num})
   }
 
   handleSearch() {
-    // fetch has problems with URL parameters
-    // let url = new URL('/patterns/search/results.json');
-    // let params = {searchVal: newState.searchVal, page: newState.page};
-    // url.search = new URLSearchParams(params);
-    // fetch(url)
-    // .then(response => response.json())
-    // .then(data => this.setSearchResults(data))
+    // uses the searchVal and issues a GET request from the server.
     $.get('/search/results.json', { searchVal: this.state.searchVal
     },
       (response) => {
-        // let data = JSON.parse(response);
-        this.setState({ searchResults: response.results, page: 1, 
+        this.setState({ searchResults: response.results, page: 1, popular: [],
+          showPopular: false,
           numPages:Math.ceil(response.results.length/this.state.resultsPerPage)
         });
       });
@@ -124,10 +141,11 @@ class App extends React.Component {
       </div>
         <SearchBar onSubmit={this.handleSearch} onChange={this.handleSearchChange}
         value={this.state.searchVal} />
+      <DisplayResults results={this.state.popular} page='1' perPage='15' isPopular={this.state.showPopular}/>
       <DisplayPages numPages={this.state.numPages}
         page={this.state.page} onClick={this.changePage}/>
       <DisplayResults results={this.state.searchResults} page={this.state.page}
-      perPage={this.state.resultsPerPage} />
+      perPage={this.state.resultsPerPage} isPopular={this.state.showPopular}/>
     </div>
     );
   }

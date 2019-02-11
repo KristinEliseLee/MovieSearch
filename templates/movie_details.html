@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
-{% block HEAD %}<title></title>{% endblock %}
+{% block HEAD %}<title>{{info['title']}}</title>{% endblock %}
 {% block BODY %}
-
+<h1>{{info['title']}}</h1>
+<table>
+{% for key in info%}
+<tr>
+    <td>{{key}}</td>
+    <td>{{info[key]}}</td>
+</tr>
+{% endfor %}
+</table>
 {% endblock %}
